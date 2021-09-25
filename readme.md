@@ -17,3 +17,7 @@ http://users.wfu.edu/choss/CUDA/docs/Lecture%2012.pdf
 https://yangwc.com/2019/06/20/NbodySimulation/
 
 ![](./result/nbody.gif)
+
+## N-Body Problem with Mouse
+
+![](./result/nbody-mouse.gif)
