@@ -29,6 +29,7 @@ mouse_m = 10000
 
 # pos, vel and force of the planets
 # Nx2 vectors
+mouse_pos = ti.Vector.field(2, ti.f32, shape=())
 pos = ti.Vector.field(2, ti.f32, N)
 vel = ti.Vector.field(2, ti.f32, N)
 force = ti.Vector.field(2, ti.f32, N)
@@ -63,15 +64,14 @@ def compute_force():
             force[j] += -f
 
 @ti.kernel
-def compute_force_mouse(mouse_x : ti.f32, mouse_y : ti.f32):
-    mouse_pos = ti.Vector([mouse_x, mouse_y])
+def compute_force_mouse():
     # clear force
     for i in range(N):
         force[i] = ti.Vector([0.0, 0.0])
     # compute gravitational force
     for i in range(N):
         p = pos[i]
-        diff = mouse_pos - p
+        diff = mouse_pos[None] - p
         r = diff.norm(1e-5)
         # gravitational force -(GMm / r^2) * (diff/r) for i
         f = G * m * mouse_m * (1.0 / r) ** 3 * diff
@@ -96,12 +96,12 @@ while gui.running:
             leftmousePressed = True
     # 如果鼠标按下，检测鼠标位置和释放信号
     if leftmousePressed:
-        mouse_x, mouse_y = gui.get_cursor_pos()
+        mouse_pos[None] = gui.get_cursor_pos()
         if (gui.get_event(ti.GUI.RELEASE, ti.GUI.SPACE)):
             leftmousePressed = False
     for i in range(substepping):
         if(leftmousePressed):
-            compute_force_mouse(mouse_x, mouse_y)
+            compute_force_mouse()
             update()
         compute_force()
         update()
