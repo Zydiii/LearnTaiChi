@@ -21,3 +21,7 @@ https://yangwc.com/2019/06/20/NbodySimulation/
 ## N-Body Problem with Mouse
 
 ![](./result/nbody-mouse.gif)
+
+## Galaxy
+
+![](./result/galaxy.gif)
