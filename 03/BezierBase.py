@@ -24,6 +24,7 @@ class ThreeBezierBase:
         self.pos_base0 = p1
         self.pos_base1 = p2
         self.pos_base2 = p3
+        self.getSubPoint()
 
     # 绘制基点
     def displayBasePoint(self, gui, radius=2, color=0x66ccff):
@@ -56,3 +57,4 @@ class ThreeBezierBase:
         gui.circle(self.pos_mid0[0].to_numpy(), color=color, radius=radius+1)
         gui.circle(self.pos_mid1[0].to_numpy(), color=color, radius=radius+1)
         gui.line(self.pos_mid0[0].to_numpy(), self.pos_mid1[0].to_numpy(), color=color, radius=radius)
+
