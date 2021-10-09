@@ -25,3 +25,6 @@ https://yangwc.com/2019/06/20/NbodySimulation/
 ## Galaxy
 
 ![](./result/galaxy.gif)
+
+## Bezier Curve
+![](./result/bezier_curve.gif)
