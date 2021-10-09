@@ -24,7 +24,7 @@ if __name__ == "__main__":
 
     # GUI
     while gui.running:
-        gui.clear(0x112F41)
+        gui.clear(0x83AF9B)
 
         # 交互响应
         if gui.get_event("startButton"):
