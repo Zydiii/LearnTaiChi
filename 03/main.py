@@ -1,46 +1,53 @@
 import taichi as ti
-from BezierBase import ThreeBezierBase
+from BezierBase import BezierBase
 
-def clickButton():
-    print("text")
+@ti.kernel
+def getSliderValue(x : ti.f32) -> ti.i32:
+    return ti.cast(x, ti.i32)
 
 if __name__ == "__main__":
     ti.init()
-    # 初始化
-    threeBezierBase = ThreeBezierBase(5)
-    threeBezierBase.setRandomBasePointPos()
-
-    # 时间步长
+    # 迭代步长
     t = 0
 
     # ui控制参数
     done = False
     start = False
 
-    # GUI
+    # 绘制窗口
     width = 500
     height = 500
     gui = ti.GUI("Bezier Curve", (width, height))
-    gui.button("Start", event_name="clickButton")
+    gui.button("Simulation On", event_name="startButton")
+    degreeSetting = gui.slider("Set Degree", 1, 10, step=1)
+    degreeSetting.value = 3
+
+    # GUI
     while gui.running:
         gui.clear(0x112F41)
-        # GUI
-        threeBezierBase.displayBasePoint(gui)
 
         # 交互响应
-        if gui.get_event("clickButton"):
+        if gui.get_event("startButton"):
             start = True
+            done = False
+            t = 0
+            # 初始化
+            degree = getSliderValue(degreeSetting.value)
+            degreeSetting.value = degree
+            bezierBase = BezierBase(degree)
+            bezierBase.setRandomBasePointPos()
 
         # 计算并绘制贝塞尔曲线
         if start:
+            # 绘制基点
+            bezierBase.displayBasePoint(gui)
             if not done:
-                if t < threeBezierBase.t_num:
-                    threeBezierBase.computeBezier(t)
+                if t < bezierBase.t_num:
+                    bezierBase.computeBezier(t)
                     t += 1
                 else:
                     done = True
-            threeBezierBase.displayMidPoint(gui)
-            gui.show()
-        else:
-            gui.show()
+            bezierBase.displayMidPoint(gui)
+        gui.show()
+
 
