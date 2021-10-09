@@ -15,8 +15,8 @@ if __name__ == "__main__":
     start = False
 
     # 绘制窗口
-    width = 500
-    height = 500
+    width = 400
+    height = 400
     gui = ti.GUI("Bezier Curve", (width, height))
     gui.button("Simulation On", event_name="startButton")
     degreeSetting = gui.slider("Set Degree", 1, 10, step=1)
@@ -49,5 +49,4 @@ if __name__ == "__main__":
                     done = True
             bezierBase.displayMidPoint(gui)
         gui.show()
-
 

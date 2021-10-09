@@ -17,7 +17,7 @@ class BezierBase:
     @ti.kernel
     def setRandomBasePointPos(self):
         for i in range(0, self.basePosNum):
-            self.basePoint_pos[i] = ti.Vector([ti.sqrt(ti.random()) * 0.9, ti.sqrt(ti.random()) * 0.8])
+            self.basePoint_pos[i] = ti.Vector([ti.sqrt(ti.random()) * 0.9, ti.sqrt(ti.random()) * 0.75])
         self.sortBasePoint()
 
     # 按照 x 坐标排序，便于可视化
