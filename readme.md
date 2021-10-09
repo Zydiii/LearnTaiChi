@@ -26,5 +26,8 @@ https://yangwc.com/2019/06/20/NbodySimulation/
 
 ![](./result/galaxy.gif)
 
-## Bezier Curve
+## 2D Bezier Curve
 ![](./result/bezier_curve.gif)
+
+## General Degree Bezier Curve
+![](./result/bezier_curve1.gif)
