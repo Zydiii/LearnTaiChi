@@ -1,5 +1,4 @@
 import taichi as ti
-import random
 
 @ti.data_oriented
 class BezierBase:
