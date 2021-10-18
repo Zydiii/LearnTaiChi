@@ -1,6 +1,6 @@
 import taichi as ti
 
-ti.init(kernel_profiler=True)
+ti.init()
 
 # global control
 paused = ti.field(ti.i32, ())
@@ -27,9 +27,26 @@ substepping = 10
 
 # pos, vel and force of the planets
 # Nx2 vectors
-pos = ti.Vector.field(2, ti.f32, N)
-vel = ti.Vector.field(2, ti.f32, N)
-force = ti.Vector.field(2, ti.f32, N)
+# pos = ti.Vector.field(2, ti.f32, N)
+# vel = ti.Vector.field(2, ti.f32, N)
+# force = ti.Vector.field(2, ti.f32, N)
+
+# dense structure
+pos = ti.field(ti.f32)
+vel = ti.field(ti.f32)
+force = ti.field(ti.f32)
+
+ti.root.dense(ti.ij, (2, N)).place(pos)
+ti.root.dense(ti.ij, (2, N)).place(vel)
+ti.root.dense(ti.ij, (2, N)).place(force)
+
+ti.root.dense(ti.i, 2).dense(ti.j, N).place(pos)
+ti.root.dense(ti.i, 2).dense(ti.j, N).place(vel)
+ti.root.dense(ti.i, 2).dense(ti.j, N).place(force)
+
+ti.root.dense(ti.j, N).dense(ti.i, 2).place(pos)
+ti.root.dense(ti.j, N).dense(ti.i, 2).place(vel)
+ti.root.dense(ti.j, N).dense(ti.i, 2).place(force)
 
 @ti.kernel
 def initialize():
@@ -94,5 +111,5 @@ while gui.running:
     gui.circles(pos.to_numpy(), color=0xffffff, radius=planet_radius)
     gui.show()
 
-    ti.print_profile_info()
-    ti.kernel_profiler_print()
+    # ti.print_profile_info()
+    # ti.kernel_profiler_print()
