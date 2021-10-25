@@ -1,25 +1,22 @@
 import taichi as ti
 
-ti.init()
+ti.init(kernel_profiler=True)
+
 res = 400
 
-# 59.21~60 FPS
-pixels = ti.field(ti.f32, (res, res))
+# pixels = ti.field(ti.f32, (res, res))
+# [ 95.95%   4.031 s    464x |    8.032     8.687    18.613 ms] paint_c42_0_kernel_1_range_for
 
-# dense structure
-# pixels = ti.field(ti.f32)
-# 59.97~60 FPS
+pixels = ti.field(ti.f32)
+
 # ti.root.dense(ti.ij, (res, res)).place(pixels)
-# 59.97~60 FPS
+# [ 95.96%   1.617 s    176x |    8.036     9.186    31.424 ms] paint_c42_0_kernel_1_range_for
+
 # ti.root.dense(ti.i, res).dense(ti.j, res).place(pixels)
-# 59.84~60 FPS
-# ti.root.dense(ti.j, res).dense(ti.i, res).place(pixels)
+# [ 96.04%   1.988 s    218x |    8.107     9.121    38.378 ms] paint_c42_0_kernel_1_range_for
 
-# sparse structure
-# pixels = ti.field(ti.f32)
-# ti.root.pointer(ti.ij, (200, 200)).dense(ti.ij, (2, 2)).place(pixels)
-
-
+ti.root.dense(ti.j, res).dense(ti.i, res).place(pixels)
+# [ 94.63%   1.225 s    131x |    7.972     9.354    25.563 ms] paint_c42_0_kernel_1_range_for
 
 
 @ti.func
@@ -34,7 +31,6 @@ def lerp(x, y, w):
 def dot(l, r):
     return l.dot(r)
 
-# https://www.shadertoy.com/view/Xsl3Dl
 @ti.func
 def hash_3d(p):
     p = ti.Vector([
@@ -76,5 +72,4 @@ while True:
     gui.set_image(pixels)
     gui.show()
 
-    # ti.print_profile_info()
-    # ti.print_kernel_profile_info()
+    ti.print_kernel_profile_info('count')

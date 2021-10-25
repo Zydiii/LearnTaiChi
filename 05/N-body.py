@@ -1,6 +1,6 @@
 import taichi as ti
 
-ti.init()
+ti.init(kernel_profiler=True)
 
 # global control
 paused = ti.field(ti.i32, ())
@@ -27,26 +27,27 @@ substepping = 10
 
 # pos, vel and force of the planets
 # Nx2 vectors
+# SoA
 # pos = ti.Vector.field(2, ti.f32, N)
 # vel = ti.Vector.field(2, ti.f32, N)
 # force = ti.Vector.field(2, ti.f32, N)
+# [ 97.20%   3.811 s    870x |    4.091     4.380     7.499 ms] compute_force_c44_0_kernel_2_range_for
+
+# AoS
+pos = ti.Vector.field(2, ti.f32)
+vel = ti.Vector.field(2, ti.f32)
+force = ti.Vector.field(2, ti.f32)
+ti.root.dense(ti.i, N).place(pos, vel, force)
+# [ 96.76%   3.122 s    850x |    3.287     3.673    10.314 ms] compute_force_c44_0_kernel_2_range_for
 
 # dense structure
-pos = ti.field(ti.f32)
-vel = ti.field(ti.f32)
-force = ti.field(ti.f32)
-
-ti.root.dense(ti.ij, (2, N)).place(pos)
-ti.root.dense(ti.ij, (2, N)).place(vel)
-ti.root.dense(ti.ij, (2, N)).place(force)
-
-ti.root.dense(ti.i, 2).dense(ti.j, N).place(pos)
-ti.root.dense(ti.i, 2).dense(ti.j, N).place(vel)
-ti.root.dense(ti.i, 2).dense(ti.j, N).place(force)
-
-ti.root.dense(ti.j, N).dense(ti.i, 2).place(pos)
-ti.root.dense(ti.j, N).dense(ti.i, 2).place(vel)
-ti.root.dense(ti.j, N).dense(ti.i, 2).place(force)
+# pos = ti.Vector.field(2, ti.f32)
+# vel = ti.Vector.field(2, ti.f32)
+# force = ti.Vector.field(2, ti.f32)
+# ti.root.dense(ti.i, N).place(pos)
+# ti.root.dense(ti.i, N).place(vel)
+# ti.root.dense(ti.i, N).place(force)
+#[ 97.28%   2.425 s    550x |    4.067     4.409    10.149 ms] compute_force_c44_0_kernel_2_range_for
 
 @ti.kernel
 def initialize():
@@ -110,6 +111,8 @@ while gui.running:
     gui.clear(0x112F41)
     gui.circles(pos.to_numpy(), color=0xffffff, radius=planet_radius)
     gui.show()
+
+    ti.print_kernel_profile_info('count')
 
     # ti.print_profile_info()
     # ti.kernel_profiler_print()

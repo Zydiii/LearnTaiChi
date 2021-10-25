@@ -1,8 +1,8 @@
 import taichi as ti
 
-ti.init()
+ti.init(kernel_profiler=True)
 
-n = 512
+n = 400
 x = ti.field(dtype=ti.i32)
 res = n + n // 4 + n // 16 + n // 64
 img = ti.field(dtype=ti.f32, shape=(res, res))
@@ -11,7 +11,6 @@ block1 = ti.root.pointer(ti.ij, n // 64)
 block2 = block1.pointer(ti.ij, 4)
 block3 = block2.pointer(ti.ij, 4)
 block3.dense(ti.ij, 4).place(x)
-
 
 @ti.kernel
 def activate(t: ti.f32):
@@ -27,7 +26,6 @@ def activate(t: ti.f32):
 def scatter(i):
     return i + i // 4 + i // 16 + i // 64 + 2
 
-
 @ti.kernel
 def paint():
     for i, j in ti.ndrange(n, n):
@@ -40,7 +38,6 @@ def paint():
         t += ti.is_active(block3, block3_index)
         img[scatter(i), scatter(j)] = 1 - t / 4
 
-
 img.fill(0.05)
 
 gui = ti.GUI('Sparse Grids', (res, res))
@@ -51,3 +48,5 @@ for i in range(100000):
     paint()
     gui.set_image(img)
     gui.show()
+
+    ti.print_kernel_profile_info('count')
