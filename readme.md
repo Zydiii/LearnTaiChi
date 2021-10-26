@@ -32,3 +32,6 @@ https://yangwc.com/2019/06/20/NbodySimulation/
 ## General Degree Bezier Curve With Button
 ![](./result/bezier_curve2.gif)
 ![](./result/bezier_curve3.gif)
+
+## Random Sin Wave
+![](./result/sinWave.gif)

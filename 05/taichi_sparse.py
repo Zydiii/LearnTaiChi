@@ -21,7 +21,6 @@ def activate(t: ti.f32):
         if ti.taichi_logo(p) == 0:
             x[i, j] = 1
 
-
 @ti.func
 def scatter(i):
     return i + i // 4 + i // 16 + i // 64 + 2
