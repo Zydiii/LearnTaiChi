@@ -35,3 +35,6 @@ https://yangwc.com/2019/06/20/NbodySimulation/
 
 ## Random Sin Wave
 ![](./result/sinWave.gif)
+
+## Random Gerstner Wave
+![](./result/gerstnerWave.gif)
