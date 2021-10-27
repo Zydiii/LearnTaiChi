@@ -17,10 +17,6 @@ w = ti.field(ti.f32)
 s = ti.field(ti.f32)
 ti.root.dense(ti.i, WaveN).place(ratio, A, w, s)
 
-# A = 0.3
-# w = 20
-# s = 0.1
-
 # 时间
 t = 0
 
