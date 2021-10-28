@@ -38,3 +38,6 @@ https://yangwc.com/2019/06/20/NbodySimulation/
 
 ## Random Gerstner Wave
 ![](./result/gerstnerWave.gif)
+
+## Shader Test
+![](./result/shaderTest.gif)
