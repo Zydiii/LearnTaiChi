@@ -5,6 +5,7 @@ def smoothstep(edge1, edge2, v):
     assert(edge1 != edge2)
     t = (v-edge1) / float(edge2-edge1)
     t = clamp(t, 0.0, 1.0)
+
     return (3-2 * t) * t**2
 
 @ti.func
@@ -42,25 +43,3 @@ def fract(vec):
 def mod(x, y):
     #return x - y * ti.floor(x/y)
     return x % y # mod between floating points are supported now, you can use x % y directly.
-
-@ti.func
-def mixThree(x, y, a):
-    c = ti.Vector([0.0, 0.0, 0.0])
-    if a > 1:
-        c = x
-    elif a < 0:
-        c = y
-    else:
-        c = x * a + y * (1 - a)
-    return c
-
-@ti.func
-def mixFour(x, y, a):
-    c = ti.Vector([0.0, 0.0, 0.0, 0.0])
-    if a > 1:
-        c = x
-    elif a < 0:
-        c = y
-    else:
-        c = x * a + y * (1 - a)
-    return c

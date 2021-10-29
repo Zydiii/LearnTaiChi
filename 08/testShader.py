@@ -5,7 +5,8 @@ ti.init()
 
 res_x = 960
 res_y = 540
-pixels = ti.Vector.field(3, ti.f32, shape=(res_x, res_y))
+pixels = ti.Vector.field(3, ti.f32)
+ti.root.dense(ti.i, res_x).dense(ti.j, res_y).place(pixels)
 
 @ti.kernel
 def render(t : ti.f32):
@@ -24,14 +25,14 @@ def render(t : ti.f32):
             color[k] = 0.01 / (hsf.mod(uv, 1.1) - 0.5).norm()
 
         color /= l
-        pixels[i,j] = color
+        pixels[i, j] = color
 
 # result_dir = "./results"
 # video_manager = ti.VideoManager(output_dir=result_dir, framerate=24, automatic_build=False)
 
 gui = ti.GUI("Canvas", res=(res_x, res_y))
 
-for i in range(200):
+for i in range(100000):
     t = i * 0.03
     render(t)
     gui.set_image(pixels)

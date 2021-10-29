@@ -1,23 +1,27 @@
 import taichi as ti
 import handy_shader_functions as hsf
 
-ti.init(cpu_max_num_threads=1)
+ti.init()
 
 res_x = 800
 res_y = 450
-pixels = ti.Vector.field(3, ti.f32, shape=(res_x, res_y))
+pixels = ti.Vector.field(3, ti.f32)
+ti.root.dense(ti.i, res_x).dense(ti.j, res_y).place(pixels)
 
+# 圆
 @ti.func
 def circle(center, radius, coord):
     offset = coord - center
     return ti.sqrt((offset.x * offset.x) + (offset.y * offset.y)) - radius
 
+# 椭圆
 @ti.func
 def ellipse(center, a, b, coord):
     a2 = a * a
     b2 = b * b
     return (b2 * (coord.x - center.x) * (coord.x - center.x) + a2 * (coord.y - center.y) * (coord.y - center.y) - a2 * b2) / (a2 * b2)
 
+# 线段
 @ti.func
 def line(p0, p1, width, coord):
     dir0 = p1 - p0
@@ -25,18 +29,22 @@ def line(p0, p1, width, coord):
     h = hsf.clamp(dir0.dot(dir1) / dir0.dot(dir0), 0.0, 1.0)
     return (dir1 - dir0 * h).norm() - width * 0.5
 
+# 并集
 @ti.func
 def union(a : ti.f32, b : ti.f32):
     return ti.min(a, b)
 
+# 差集
 @ti.func
 def difference(a : ti.f32, b : ti.f32):
     return ti.max(a, -b)
 
+# 交集
 @ti.func
 def intersection(a : ti.f32, b : ti.f32):
     return ti.max(a, b)
 
+# 根据距离场设定颜色
 @ti.func
 def getColor(d, color):
     return ti.Vector([color[0], color[1], color[2], 1.0 - hsf.step(0, d)])
@@ -44,9 +52,9 @@ def getColor(d, color):
 @ti.kernel
 def render(t : ti.f32):
     for i, j in pixels:
-        size = ti.min(res_x, res_y)
         uv = ti.Vector([i, j]) / res_x
         center = ti.Vector([0.5, 0.5 * res_y / res_x])
+        p = ti.Vector([2 * i - res_x, 2 * j - res_y]) / ti.min(res_y, res_x)
 
         # 伞柄
         bottom = 0.08
@@ -74,11 +82,6 @@ def render(t : ti.f32):
         # 伞花纹
         layer2 = ti.Vector([layer1[0], layer1[1], layer1[2], layer1[3]])
         sinuv = ti.Vector([uv.x, (ti.sin(uv.x * 40.0) * 0.02 + 1.0) * uv.y])
-        r0 = 0.0
-        r1 = 0.0
-        r2 = 0.0
-        e = 0.0
-        f = 0.0
         for k in range(0, 10):
             time = hsf.mod(t + 0.3 * k, 3.0) * 0.2
             r1 = (time - 0.15) / 0.2 * 0.1 + 0.9
@@ -89,23 +92,20 @@ def render(t : ti.f32):
             f = difference(e, f)
             f = intersection(f, b)
             layer = getColor(f, ti.Vector([1.0, 0.81, 0.27]))
-            layer2 = hsf.mixFour(layer, layer2, layer[3])
+            layer2 = hsf.lerp(layer2, layer, layer[3])
 
         # 背景颜色
-        p = ti.Vector([2 * i - res_x, 2 * j - res_y]) / ti.min(res_y, res_x)
         bgColor = ti.Vector([1.0, 0.8, 0.7 - 0.07 * p.y]) * (1 - 0.25 * p.norm())
 
-        # 混合颜色
-        color = ti.Vector([bgColor[0], bgColor[1], bgColor[2]])
-        color = hsf.mixThree(ti.Vector([layer0[0], layer0[1], layer0[2]]), color, layer0[3])
-        color = hsf.mixThree(ti.Vector([layer1[0], layer1[1], layer1[2]]), color, layer1[3])
-        color = hsf.mixThree(ti.Vector([layer2[0], layer2[1], layer2[2]]), color, layer2[3])
-
-        # 最终的颜色
+        # 混合最终的颜色
+        color = bgColor
+        color = hsf.lerp(color, ti.Vector([layer0[0], layer0[1], layer0[2]]), layer0[3])
+        color = hsf.lerp(color, ti.Vector([layer1[0], layer1[1], layer1[2]]), layer1[3])
+        color = hsf.lerp(color, ti.Vector([layer2[0], layer2[1], layer2[2]]), layer2[3])
         pixels[i,j] = ti.pow(color, ti.Vector([1.0 / 2.2, 1.0 / 2.2, 1.0 / 2.2]))
 
-# result_dir = "./results"
-# video_manager = ti.VideoManager(output_dir=result_dir, framerate=24, automatic_build=False)
+result_dir = "./results"
+video_manager = ti.VideoManager(output_dir=result_dir, framerate=24, automatic_build=False)
 
 gui = ti.GUI("Canvas", res=(res_x, res_y))
 
@@ -114,12 +114,12 @@ for i in range(300):
     render(t)
     gui.set_image(pixels)
     gui.show()
-    # pixels_img = pixels.to_numpy()
-    # video_manager.write_frame(pixels_img)
-    # print(f'\rFrame {i + 1}/300 is recorded', end='')
+    pixels_img = pixels.to_numpy()
+    video_manager.write_frame(pixels_img)
+    print(f'\rFrame {i + 1}/300 is recorded', end='')
 
-# print()
-# print('Exporting .mp4 and .gif videos...')
-# video_manager.make_video(gif=True, mp4=True)
-# print(f'MP4 video is saved to {video_manager.get_output_filename(".mp4")}')
-# print(f'GIF video is saved to {video_manager.get_output_filename(".gif")}')
+print()
+print('Exporting .mp4 and .gif videos...')
+video_manager.make_video(gif=True, mp4=True)
+print(f'MP4 video is saved to {video_manager.get_output_filename(".mp4")}')
+print(f'GIF video is saved to {video_manager.get_output_filename(".gif")}')
