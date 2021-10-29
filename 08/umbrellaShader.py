@@ -33,7 +33,7 @@ def line(p0, p1, width, coord):
 def product(p1, p2, p3):
     return (p2.x-p1.x) * (p3.y-p1.y) - (p2.y-p1.y) * (p3.x-p1.x)
 
-# 线段
+# 三角形
 @ti.func
 def triangle(a, b, c, coord):
     ret = 1
