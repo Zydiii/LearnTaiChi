@@ -12,7 +12,6 @@ def linearstep(edge1, edge2, v):
     assert(edge1 != edge2)
     t = (v-edge1) / float(edge2-edge1)
     t = clamp(t, 0.0, 1.0)
-
     return t
 
 @ti.func

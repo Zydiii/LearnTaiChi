@@ -29,6 +29,18 @@ def line(p0, p1, width, coord):
     h = hsf.clamp(dir0.dot(dir1) / dir0.dot(dir0), 0.0, 1.0)
     return (dir1 - dir0 * h).norm() - width * 0.5
 
+@ti.func
+def product(p1, p2, p3):
+    return (p2.x-p1.x) * (p3.y-p1.y) - (p2.y-p1.y) * (p3.x-p1.x)
+
+# 线段
+@ti.func
+def triangle(a, b, c, coord):
+    ret = 1
+    if product(a, b, coord) > 0 and product(b, c, coord) > 0 and product(c, a, coord) > 0:
+        ret = -1
+    return ret
+
 # 并集
 @ti.func
 def union(a : ti.f32, b : ti.f32):
@@ -94,6 +106,26 @@ def render(t : ti.f32):
             layer = getColor(f, ti.Vector([1.0, 0.81, 0.27]))
             layer2 = hsf.lerp(layer2, layer, layer[3])
 
+        # 雨滴
+        layer3 = ti.Vector([0.0, 0.0, 0.0, 0.0])
+        time = hsf.mod(t, 0.3)
+        for m in range(0, 3):
+            for k in range(0, 10):
+                rainShape1 = ti.Vector([-0.01, -0.03])
+                rainShape2 = ti.Vector([0.01, -0.03])
+                p0 = ti.Vector([0.1 + k * 0.09, 0.55 - 0.2 * m - 5 * time * time])
+                if p0.y < 0:
+                    p0.y += 0.5
+                p1 = p0 + rainShape1
+                p2 = p0 + rainShape2
+                e = triangle(p0, p1, p2, uv)
+                rainCenter = p0 + ti.Vector([0, rainShape1.y])
+                rainRadius = rainShape2.x
+                f = circle(rainCenter, rainRadius, uv)
+                f = union(e, f)
+                layer = getColor(f, ti.Vector([0.2, 0.4, 0.6]))
+                layer3 = hsf.lerp(layer3, layer, layer[3])
+
         # 背景颜色
         bgColor = ti.Vector([1.0, 0.8, 0.7 - 0.07 * p.y]) * (1 - 0.25 * p.norm())
 
@@ -102,6 +134,7 @@ def render(t : ti.f32):
         color = hsf.lerp(color, ti.Vector([layer0[0], layer0[1], layer0[2]]), layer0[3])
         color = hsf.lerp(color, ti.Vector([layer1[0], layer1[1], layer1[2]]), layer1[3])
         color = hsf.lerp(color, ti.Vector([layer2[0], layer2[1], layer2[2]]), layer2[3])
+        color = hsf.lerp(color, ti.Vector([layer3[0], layer3[1], layer3[2]]), layer3[3])
         pixels[i,j] = ti.pow(color, ti.Vector([1.0 / 2.2, 1.0 / 2.2, 1.0 / 2.2]))
 
 result_dir = "./results"
@@ -109,17 +142,17 @@ video_manager = ti.VideoManager(output_dir=result_dir, framerate=24, automatic_b
 
 gui = ti.GUI("Canvas", res=(res_x, res_y))
 
-for i in range(300):
-    t = i * 0.03
+for i in range(200):
+    t = i * 0.003
     render(t)
     gui.set_image(pixels)
     gui.show()
-    pixels_img = pixels.to_numpy()
-    video_manager.write_frame(pixels_img)
-    print(f'\rFrame {i + 1}/300 is recorded', end='')
-
-print()
-print('Exporting .mp4 and .gif videos...')
-video_manager.make_video(gif=True, mp4=True)
-print(f'MP4 video is saved to {video_manager.get_output_filename(".mp4")}')
-print(f'GIF video is saved to {video_manager.get_output_filename(".gif")}')
+#     pixels_img = pixels.to_numpy()
+#     video_manager.write_frame(pixels_img)
+#     print(f'\rFrame {i + 1}/200 is recorded', end='')
+#
+# print()
+# print('Exporting .mp4 and .gif videos...')
+# video_manager.make_video(gif=True, mp4=True)
+# print(f'MP4 video is saved to {video_manager.get_output_filename(".mp4")}')
+# print(f'GIF video is saved to {video_manager.get_output_filename(".gif")}')
