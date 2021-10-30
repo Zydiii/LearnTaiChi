@@ -69,18 +69,34 @@ class Poly():
     def getEdgeInfo(self):
         for i in range(0, self.edgeNum):
             print(i)
-            print(self.edgeInfo[i, 0])
+            print(self.edgeInfo[i, 1])
 
-    # 生成边的详细信息
+    @ti.kernel
+    def testIn(self, x:ti.f32, y:ti.f32):
+        self.getActiveEdge(y)
+        print("激活边")
+        for i in self.activeEdge:
+            print("i")
+            print(i)
+            print(self.activeEdge[i])
+            print("交点")
+            print(self.activeInterX[i])
+
+        print("在")
+        print(self.checkPixelIn(x))
+
+    # 生成边的详细信息，没有处理边垂直的时候！！
     @ti.kernel
     def generateEdgeInfo(self):
         for i in range(0, self.edgeNum):
             highY = max(self.edges[i, 0].y, self.edges[i, 1].y)
             lowY = min(self.edges[i, 0].y, self.edges[i, 1].y)
-            # y = mx + b
-            m = (self.edges[i, 0].y - self.edges[i, 1].y) / (self.edges[i, 0].x - self.edges[i, 1].x)
-            b = self.edges[i, 0].y - self.edges[i, 0].x * m
             self.edgeInfo[i, 0] = ti.Vector([highY, lowY])
+            # y = mx + b
+            m = 0.00001
+            if self.edges[i, 0].x != self.edges[i, 1].x :
+                m = (self.edges[i, 0].y - self.edges[i, 1].y) / (self.edges[i, 0].x - self.edges[i, 1].x)
+            b = self.edges[i, 0].y - self.edges[i, 0].x * m
             self.edgeInfo[i, 1] = ti.Vector([m, b])
 
     # 计算某个像素点从左到右穿过了多少条边，判断点是否在内部
@@ -90,15 +106,16 @@ class Poly():
         for i in range(0, self.edgeNum):
             if self.activeEdge[i] and self.activeInterX[i] < x:
                 interCount += 1
-        return 1 - interCount % 2
+        return interCount % 2
 
     # 获取会与扫描线相交的边
+    # 不同边的端点相等的时候扫描线可能会一个相等一个不等，好奇怪啊，但是目前调不出来了。。。
     @ti.func
     def getActiveEdge(self, y):
         for i in range(0, self.edgeNum):
             if self.edgeInfo[i, 0].x >= y and self.edgeInfo[i, 0].y <= y:
                 self.activeEdge[i] = 1
-                self.activeInterX[i] = (y - self.edgeInfo[i, 1].y) / self.edgeInfo[i, 1].m
+                self.activeInterX[i] = (y - self.edgeInfo[i, 1].y) / self.edgeInfo[i, 1].x
             else:
                 self.activeEdge[i] = 0
 
@@ -117,3 +134,7 @@ class Poly():
     # 显示
     def display(self, gui):
         gui.set_image(self.pixels)
+
+    def displayTest(self, gui):
+        for i in range(0, self.edgeNum):
+            gui.line(self.edges[i, 0].to_numpy(), self.edges[i, 1].to_numpy())
