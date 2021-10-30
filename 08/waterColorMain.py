@@ -9,9 +9,9 @@ res_y = 540
 if __name__ == "__main__":
     centerPos = ti.Vector([0.5, 0.5])
     radius = 0.1
-    poly = Poly(10, centerPos, radius, res_x, res_y)
+    poly = Poly(9, centerPos, radius, res_x, res_y)
     # poly.getEdge()
-    # poly.testIn(0, 1)
+    # poly.testIn(0.5, 0.5)
 
     gui = ti.GUI("Water Color", res=(res_x, res_y))
 
@@ -20,5 +20,6 @@ if __name__ == "__main__":
             t = i * 0.01
             poly.render(t)
             poly.display(gui)
-            poly.displayTest(gui)
+            # poly.displayTest(gui)
+            # gui.circle(ti.Vector([0.5, 0.5]).to_numpy(), radius=5)
             gui.show()

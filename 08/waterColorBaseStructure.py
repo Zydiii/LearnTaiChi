@@ -143,10 +143,16 @@ class Poly():
         index = ti.cast(ti.mod(seed, 4), ti.i32)
         fg_col = self.fg_cols[index]
         for j in range(0, self.res_y):
-            self.getActiveEdge(j / self.res_x)
+            self.getActiveEdge(j / self.res_y)
             for i in range(0, self.res_x):
                 a = self.checkPixelIn(i / self.res_x)
                 self.pixels[i, j] = hsf.lerp(self.bg_col, fg_col, a)
+                # if j == 480 and i == 270:
+                #     print("a")
+                #     print(a)
+                #     print(i / self.res_x)
+                #     print(j / self.res_y)
+                #     print(self.pixels[i, j])
 
     # 显示
     def display(self, gui):
