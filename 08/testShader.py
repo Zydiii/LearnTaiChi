@@ -27,20 +27,20 @@ def render(t : ti.f32):
         color /= l
         pixels[i, j] = color
 
-# result_dir = "./results"
-# video_manager = ti.VideoManager(output_dir=result_dir, framerate=24, automatic_build=False)
+result_dir = "./results"
+video_manager = ti.VideoManager(output_dir=result_dir, framerate=24, automatic_build=False)
 
 gui = ti.GUI("Canvas", res=(res_x, res_y))
 
-for i in range(100000):
+for i in range(50):
     t = i * 0.03
     render(t)
     gui.set_image(pixels)
     gui.show()
-    # pixels_img = pixels.to_numpy()
-    # video_manager.write_frame(pixels_img)
-    # print(f'\rFrame {i + 1}/200 is recorded', end='')
-
+#     pixels_img = pixels.to_numpy()
+#     video_manager.write_frame(pixels_img)
+#     print(f'\rFrame {i + 1}/50 is recorded', end='')
+#
 # print()
 # print('Exporting .mp4 and .gif videos...')
 # video_manager.make_video(gif=True, mp4=True)
