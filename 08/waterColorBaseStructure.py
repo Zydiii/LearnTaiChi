@@ -13,6 +13,7 @@ class Poly():
         self.vertices = ti.Vector.field(2, ti.f32)
         ti.root.dense(ti.i, self.num).place(self.vertices)
         self.generateVertices()
+        self.warpVertex()
         # 边
         self.edgeNum = self.num
         self.edges = ti.Vector.field(2, ti.f32)
@@ -57,6 +58,22 @@ class Poly():
             self.edges[i, 1] = self.vertices[i + 1]
         self.edges[self.edgeNum - 1, 0] = self.vertices[self.num - 1]
         self.edges[self.edgeNum - 1, 1] = self.vertices[0]
+
+    # 歪曲顶点
+    @ti.kernel
+    def warpVertex(self):
+        for i in range(0, self.num):
+            strengh = 0.0
+            if i == 0:
+                strengh = (self.vertices[self.num - 1] - self.vertices[1]).norm()
+            elif i == self.num - 1:
+                strengh = (self.vertices[self.num - 2] - self.vertices[0]).norm()
+            else:
+                strengh = (self.vertices[i - 1] - self.vertices[i + 1]).norm()
+            offset = ti.Vector([ti.random(), ti.random()]) - 0.5
+            offset *= strengh
+            offset *= 0.5
+            self.vertices[i] += offset
 
     @ti.kernel
     def getEdge(self):
@@ -109,7 +126,7 @@ class Poly():
         return interCount % 2
 
     # 获取会与扫描线相交的边
-    # 不同边的端点相等的时候扫描线可能会一个相等一个不等，好奇怪啊，但是目前调不出来了。。。
+    # 不同边的端点相等的时候扫描线可能会一个相等一个不等，好奇怪啊，感觉可能和精度有一点关系，但是可能影响不大，目前调不出来了。。。
     @ti.func
     def getActiveEdge(self, y):
         for i in range(0, self.edgeNum):
