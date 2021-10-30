@@ -43,6 +43,13 @@ class Poly():
         self.fg_cols[3] = ti.Vector([161, 90, 188]) / 256  # purple
         self.opacity = opacity
 
+    def helper(self):
+        self.generateVertices()
+        self.warpVertex()
+        self.generateEdge()
+        self.generateEdgeInfo()
+        self.getActiveEdge()
+
     # 生成顶点
     @ti.kernel
     def generateVertices(self):
@@ -117,9 +124,6 @@ class Poly():
         seed = ti.floor(t * 0.5)
         index = ti.cast(ti.mod(seed, 4), ti.i32)
         fg_col = self.fg_cols[index]
-        num_layers = 3 + 2 * ti.mod(seed, 5)
-        for k in range(0, num_layers):
-            seed *= num_layers
         for i, j in self.pixels:
             a = self.checkPixelIn(i / self.res_x, j)
             self.pixels[i, j] = hsf.lerp(self.bg_col, fg_col, a)
