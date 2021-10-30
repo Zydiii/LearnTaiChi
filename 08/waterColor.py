@@ -86,7 +86,7 @@ video_manager = ti.VideoManager(output_dir=result_dir, framerate=24, automatic_b
 gui = ti.GUI("Canvas", res=(res_x, res_y))
 
 for i in range(200):
-    t = i * 0.1
+    t = i * 0.01
     render(t)
     gui.set_image(pixels)
     gui.show()
