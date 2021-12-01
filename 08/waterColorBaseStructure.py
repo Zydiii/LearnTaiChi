@@ -5,7 +5,7 @@ import handy_shader_functions as hsf
 # 多边形，默认顶点顺序按照逆时针
 @ti.data_oriented
 class Poly():
-    def __init__(self, N, centerPos, radius, res_x, res_y):
+    def __init__(self, N, centerPos, radius, res_x, res_y, opacity):
         # 顶点
         self.centerPos = centerPos
         self.radius = radius
@@ -18,21 +18,21 @@ class Poly():
         self.edgeNum = self.num
         self.edges = ti.Vector.field(2, ti.f32)
         ti.root.dense(ti.ij, (self.edgeNum, 2)).place(self.edges)
-        self.generateEdge()
-        # 边的详细信息
         self.edgeInfo = ti.Vector.field(2, ti.f32)
         ti.root.dense(ti.ij, (self.edgeNum, 2)).place(self.edgeInfo)
+        self.generateEdge()
         self.generateEdgeInfo()
-        # 激活的边及交点
-        self.activeEdge = ti.field(ti.i32)
-        ti.root.dense(ti.i, self.edgeNum).place(self.activeEdge)
-        self.activeInterX = ti.field(ti.f32)
-        ti.root.dense(ti.i, self.edgeNum).place(self.activeInterX)
         # 显示相关
         self.res_x = res_x
         self.res_y = res_y
         self.pixels = ti.Vector.field(3, ti.f32)
         ti.root.dense(ti.i, self.res_x).dense(ti.j, self.res_y).place(self.pixels)
+        # 激活的边及交点
+        self.activeEdge = ti.field(ti.i32)
+        ti.root.dense(ti.ij, (self.res_y, self.edgeNum)).place(self.activeEdge)
+        self.activeInterX = ti.field(ti.f32)
+        ti.root.dense(ti.ij, (self.res_y, self.edgeNum)).place(self.activeInterX)
+        self.getActiveEdge()
         # 颜色
         self.bg_col = ti.Vector([229, 204, 175]) / 256
         self.fg_cols = ti.Vector.field(3, ti.f32)
@@ -41,6 +41,14 @@ class Poly():
         self.fg_cols[1] = ti.Vector([232, 141, 122]) / 256  # red
         self.fg_cols[2] = ti.Vector([90, 188, 94]) / 256  # green
         self.fg_cols[3] = ti.Vector([161, 90, 188]) / 256  # purple
+        self.opacity = opacity
+
+    def helper(self):
+        self.generateVertices()
+        self.warpVertex()
+        self.generateEdge()
+        self.generateEdgeInfo()
+        self.getActiveEdge()
 
     # 生成顶点
     @ti.kernel
@@ -70,37 +78,9 @@ class Poly():
                 strengh = (self.vertices[self.num - 2] - self.vertices[0]).norm()
             else:
                 strengh = (self.vertices[i - 1] - self.vertices[i + 1]).norm()
-            offset = ti.Vector([ti.random(), ti.random()]) - 0.5
+            offset = ti.Vector([ti.random(), ti.random()]) - ti.Vector([0.6, 0.5])
             offset *= strengh
-            offset *= 0.5
             self.vertices[i] += offset
-
-    @ti.kernel
-    def getEdge(self):
-        for i in range(0, self.edgeNum):
-            print(i)
-            print(self.edges[i, 0])
-            print(self.edges[i, 1])
-
-    @ti.kernel
-    def getEdgeInfo(self):
-        for i in range(0, self.edgeNum):
-            print(i)
-            print(self.edgeInfo[i, 1])
-
-    @ti.kernel
-    def testIn(self, x:ti.f32, y:ti.f32):
-        self.getActiveEdge(y)
-        print("激活边")
-        for i in self.activeEdge:
-            print("i")
-            print(i)
-            print(self.activeEdge[i])
-            print("交点")
-            print(self.activeInterX[i])
-
-        print("在")
-        print(self.checkPixelIn(x))
 
     # 生成边的详细信息，没有处理边垂直的时候！！
     @ti.kernel
@@ -118,23 +98,25 @@ class Poly():
 
     # 计算某个像素点从左到右穿过了多少条边，判断点是否在内部
     @ti.func
-    def checkPixelIn(self, x):
+    def checkPixelIn(self, x, y):
         interCount = 0
-        for i in range(0, self.edgeNum):
-            if self.activeEdge[i] and self.activeInterX[i] < x:
+        for j in range(0, self.edgeNum):
+            if self.activeEdge[y, j] and self.activeInterX[y, j] < x:
                 interCount += 1
         return interCount % 2
 
-    # 获取会与扫描线相交的边
+    # 获取会与扫描线相交的边和交点
     # 不同边的端点相等的时候扫描线可能会一个相等一个不等，好奇怪啊，感觉可能和精度有一点关系，但是可能影响不大，目前调不出来了。。。
-    @ti.func
-    def getActiveEdge(self, y):
-        for i in range(0, self.edgeNum):
-            if self.edgeInfo[i, 0].x >= y and self.edgeInfo[i, 0].y <= y:
-                self.activeEdge[i] = 1
-                self.activeInterX[i] = (y - self.edgeInfo[i, 1].y) / self.edgeInfo[i, 1].x
-            else:
-                self.activeEdge[i] = 0
+    @ti.kernel
+    def getActiveEdge(self):
+        for i in range(0, self.res_y):
+            y = i / self.res_y
+            for j in range(0, self.edgeNum):
+                if self.edgeInfo[j, 0].x >= y and self.edgeInfo[j, 0].y <= y:
+                    self.activeEdge[i, j] = 1
+                    self.activeInterX[i, j] = (y - self.edgeInfo[j, 1].y) / self.edgeInfo[j, 1].x
+                else:
+                    self.activeEdge[i, j] = 0
 
     # 计算像素点颜色
     @ti.kernel
@@ -142,11 +124,9 @@ class Poly():
         seed = ti.floor(t * 0.5)
         index = ti.cast(ti.mod(seed, 4), ti.i32)
         fg_col = self.fg_cols[index]
-        for j in range(0, self.res_y):
-            self.getActiveEdge(j / self.res_x)
-            for i in range(0, self.res_x):
-                a = self.checkPixelIn(i / self.res_x)
-                self.pixels[i, j] = hsf.lerp(self.bg_col, fg_col, a)
+        for i, j in self.pixels:
+            a = self.checkPixelIn(i / self.res_x, j)
+            self.pixels[i, j] = hsf.lerp(self.bg_col, fg_col, a)
 
     # 显示
     def display(self, gui):
@@ -155,3 +135,30 @@ class Poly():
     def displayTest(self, gui):
         for i in range(0, self.edgeNum):
             gui.line(self.edges[i, 0].to_numpy(), self.edges[i, 1].to_numpy())
+
+    @ti.kernel
+    def getEdge(self):
+        for i in range(0, self.edgeNum):
+            print(i)
+            print(self.edges[i, 0])
+            print(self.edges[i, 1])
+
+    @ti.kernel
+    def getEdgeInfo(self):
+        for i in range(0, self.edgeNum):
+            print(i)
+            print(self.edgeInfo[i, 1])
+
+    @ti.kernel
+    def testIn(self, x:ti.f32, y:ti.f32):
+        self.getActiveEdge()
+        print("激活边")
+        for i in self.activeEdge:
+            print("i")
+            print(i)
+            print(self.activeEdge[i])
+            print("交点")
+            print(self.activeInterX[i])
+
+        print("在")
+        print(self.checkPixelIn(x))
